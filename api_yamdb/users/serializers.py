@@ -1,11 +1,17 @@
-from rest_framework import serializers
 from django.core.mail import send_mail
-from .models import User, generate_confirmation_code
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
+
+from .models import User
 
 
 class SignUpSerializer(serializers.Serializer):
+    """
+    Сериализатор для регистрации нового пользователя.
+    Запрашиваемые поля: email, username.
+    Если пользователь уже существует с указанным username, проверяем email.
+    Генерируем код подтверждения и отправляем на почту.
+    """
     email = serializers.EmailField(required=True)
     username = serializers.CharField(required=True, max_length=150)
 
@@ -19,12 +25,11 @@ class SignUpSerializer(serializers.Serializer):
             username=validated_data['username'],
             defaults={'email': validated_data['email']}
         )
-        # Если пользователь существует, проверяем email
         if not created and user.email != validated_data['email']:
-            raise ValidationError("Пользователь с таким username уже существует с другим email.")
+            raise ValidationError("Username уже существует с другим email.")
 
-        user.confirmation_code = generate_confirmation_code()
-        user.save()
+        user.set_new_confirmation_code()
+
         send_mail(
             subject="Your confirmation code",
             message=f"Your confirmation code is {user.confirmation_code}",
@@ -35,12 +40,18 @@ class SignUpSerializer(serializers.Serializer):
 
 
 class TokenSerializer(serializers.Serializer):
+    """
+    Сериализатор для получения JWT-токена.
+    Запрашиваемые поля: username, confirmation_code.
+    Проверяем валидность кода и выдаём токен.
+    """
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
     def validate(self, data):
         username = data['username']
         code = data['confirmation_code']
+
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -49,13 +60,16 @@ class TokenSerializer(serializers.Serializer):
         if user.confirmation_code != code:
             raise ValidationError("Неверный код подтверждения.")
 
+        from rest_framework_simplejwt.tokens import RefreshToken  # локальный импорт при необходимости
         refresh = RefreshToken.for_user(user)
-        return {
-            'token': str(refresh.access_token),
-        }
+        return {'token': str(refresh.access_token)}
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для просмотра и частичного обновления данных пользователя.
+    Поля role, username для пользователя не редактируемы.
+    """
     class Meta:
         model = User
         fields = ('username', 'email', 'role', 'bio', 'first_name', 'last_name')
@@ -63,12 +77,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для создания и редактирования пользователей администратором.
+    """
     class Meta:
         model = User
         fields = ('username', 'email', 'role', 'bio', 'first_name', 'last_name')
 
 
 class MeSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для просмотра и обновления данных своей учётной записи.
+    Роль и username нельзя менять.
+    """
     class Meta:
         model = User
         fields = ('username', 'email', 'role', 'bio', 'first_name', 'last_name')

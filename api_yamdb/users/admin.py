@@ -1,13 +1,11 @@
-from django.contrib import admin
-from .models import User
-from django.contrib.auth.admin import UserAdmin
+from rest_framework import permissions
 
 
-class CustomUserAdmin(UserAdmin):
-    fieldsets = UserAdmin.fieldsets + (
-        ('Extra Fields', {'fields': ('bio', 'role')}),
-    )
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser')
+class IsAdmin(permissions.BasePermission):
+    """Разрешает доступ только администратору."""
 
-
-admin.site.register(User, CustomUserAdmin)
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated
+            and request.user.is_admin
+        )
