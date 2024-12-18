@@ -1,22 +1,28 @@
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from .models import User, generate_confirmation_code
-from rest_framework.exceptions import NotFound
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import NotFound, ValidationError
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'bio', 'role')
+class SignUpSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    username = serializers.CharField(required=True, max_length=150)
 
     def validate_username(self, value):
         if value.lower() == 'me':
-            raise serializers.ValidationError("Использование 'me' в качестве username запрещено.")
+            raise ValidationError("Использование 'me' в качестве username запрещено.")
         return value
 
     def create(self, validated_data):
-        user = User.objects.create(**validated_data)
+        user, created = User.objects.get_or_create(
+            username=validated_data['username'],
+            defaults={'email': validated_data['email']}
+        )
+        # Если пользователь существует, проверяем email
+        if not created and user.email != validated_data['email']:
+            raise ValidationError("Пользователь с таким username уже существует с другим email.")
+
         user.confirmation_code = generate_confirmation_code()
         user.save()
         send_mail(
@@ -33,18 +39,37 @@ class TokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField()
 
     def validate(self, data):
-        username = data.get('username')
-        confirmation_code = data.get('confirmation_code')
-
-        user = User.objects.filter(username=username).first()
-        if not user:
+        username = data['username']
+        code = data['confirmation_code']
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
             raise NotFound("Пользователь не найден.")
 
-        if user.confirmation_code != confirmation_code:
-            raise serializers.ValidationError("Неверный код подтверждения.")
+        if user.confirmation_code != code:
+            raise ValidationError("Неверный код подтверждения.")
 
         refresh = RefreshToken.for_user(user)
         return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
+            'token': str(refresh.access_token),
         }
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'role', 'bio', 'first_name', 'last_name')
+        read_only_fields = ('role',)
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'role', 'bio', 'first_name', 'last_name')
+
+
+class MeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'role', 'bio', 'first_name', 'last_name')
+        read_only_fields = ('role', 'username')
