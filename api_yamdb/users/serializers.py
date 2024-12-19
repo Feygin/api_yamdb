@@ -35,9 +35,9 @@ class SignUpSerializer(serializers.Serializer):
         user.set_new_confirmation_code()
 
         send_mail(
-            subject='Your confirmation code',
-            message=f'Your confirmation code is {user.confirmation_code}',
-            from_email= settings.DEFAULT_FROM_EMAIL,
+            subject='Подтверждение почты',
+            message=f'Ваш код подтвeрждeния почты: {user.confirmation_code}',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
         )
         return user
