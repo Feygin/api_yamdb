@@ -1,6 +1,8 @@
 from django.core.mail import send_mail
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 
@@ -17,7 +19,9 @@ class SignUpSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         if value.lower() == 'me':
-            raise ValidationError("Использование 'me' в качестве username запрещено.")
+            raise ValidationError(
+                'Использование "me" в качестве username запрещено.'
+            )
         return value
 
     def create(self, validated_data):
@@ -26,14 +30,14 @@ class SignUpSerializer(serializers.Serializer):
             defaults={'email': validated_data['email']}
         )
         if not created and user.email != validated_data['email']:
-            raise ValidationError("Username уже существует с другим email.")
+            raise ValidationError('Username уже существует с другим email.')
 
         user.set_new_confirmation_code()
 
         send_mail(
-            subject="Your confirmation code",
-            message=f"Your confirmation code is {user.confirmation_code}",
-            from_email="no-reply@example.com",
+            subject='Your confirmation code',
+            message=f'Your confirmation code is {user.confirmation_code}',
+            from_email= settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
         )
         return user
@@ -55,12 +59,11 @@ class TokenSerializer(serializers.Serializer):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise NotFound("Пользователь не найден.")
+            raise NotFound('Пользователь не найден.')
 
         if user.confirmation_code != code:
-            raise ValidationError("Неверный код подтверждения.")
+            raise ValidationError('Неверный код подтверждения.')
 
-        from rest_framework_simplejwt.tokens import RefreshToken  # локальный импорт при необходимости
         refresh = RefreshToken.for_user(user)
         return {'token': str(refresh.access_token)}
 

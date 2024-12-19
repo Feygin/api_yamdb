@@ -6,8 +6,7 @@ from rest_framework.views import APIView
 from .models import User
 from .permissions import IsAdmin
 from .serializers import (
-    SignUpSerializer, TokenSerializer, UserSerializer,
-    AdminUserSerializer, MeSerializer
+    SignUpSerializer, TokenSerializer, AdminUserSerializer, MeSerializer
 )
 
 
@@ -26,7 +25,7 @@ class SignUpView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return Response(
-            {"email": user.email, "username": user.username},
+            {'email': user.email, 'username': user.username},
             status=status.HTTP_200_OK
         )
 
