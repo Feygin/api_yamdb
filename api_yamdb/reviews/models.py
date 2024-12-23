@@ -1,15 +1,23 @@
-from django.db import models
-from django.core.validators import MaxValueValidator
-from django.contrib.auth import get_user_model
 from datetime import datetime
+
+from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator
+from django.db import models
 
 User = get_user_model()
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=256, unique=True, verbose_name="Genre Name")
+    name = models.CharField(
+        max_length=256,
+        unique=True,
+        verbose_name="Genre Name"
+    )
     slug = models.SlugField(
-        max_length=50, unique=True, regex=r"^[-a-zA-Z0-9_]+$", verbose_name="Slug"
+        max_length=50,
+        unique=True,
+        regex=r"^[-a-zA-Z0-9_]+$",
+        verbose_name="Slug"
     )
 
     class Meta:
@@ -21,9 +29,16 @@ class Genre(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=256, unique=True, verbose_name="Category Name")
+    name = models.CharField(
+        max_length=256,
+        unique=True,
+        verbose_name="Category Name"
+    )
     slug = models.SlugField(
-        max_length=50, unique=True, regex=r"^[-a-zA-Z0-9_]+$", verbose_name="Slug"
+        max_length=50,
+        unique=True,
+        regex=r"^[-a-zA-Z0-9_]+$",
+        verbose_name="Slug"
     )
 
     class Meta:
@@ -35,14 +50,23 @@ class Category(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256, verbose_name="Title Name")
+    name = models.CharField(
+        max_length=256,
+        verbose_name="Title Name"
+    )
     year = models.PositiveIntegerField(
         validators=[MaxValueValidator(datetime.now().year)],
         verbose_name="Year of Release",
     )
-    description = models.TextField(null=True, blank=True, verbose_name="Description")
+    description = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Description"
+    )
     genre = models.ManyToManyField(
-        "Genre", related_name="titles", verbose_name="Genres"
+        "Genre",
+        related_name="titles",
+        verbose_name="Genres"
     )
     category = models.ForeignKey(
         "Category",
@@ -54,7 +78,10 @@ class Title(models.Model):
 
     @property
     def rating(self):
-        return self.reviews.aggregate(models.Avg("score")).get("score__avg")
+        return (
+            self.reviews.aggregate(models.Avg("score"))
+            .get("score__avg")
+        )
 
     class Meta:
         verbose_name = "Title"
