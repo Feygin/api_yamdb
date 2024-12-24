@@ -1,11 +1,20 @@
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Avg
+
+
+User = get_user_model
 
 
 class Review(models.Model):
     title = models.CharField('Произведение', max_length=255)  # временно
-    author = models.IntegerField('Автор', null=True, blank=True)  # временно
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Автор'
+
+    )
     text = models.TextField('Текст отзыва')
     score = models.PositiveSmallIntegerField(
         'Оценка',
@@ -29,17 +38,20 @@ class Review(models.Model):
     def __str__(self):
         return self.text
 
-    @staticmethod
-    def get_average_rating(title_id):
-        reviews = Review.objects.filter(title_id=title_id)
-        average_score = reviews.aggregate(Avg('score'))['score__avg']
-        return round(average_score) if average_score else None
-
 
 class Comment(models.Model):
     review = models.ForeignKey(
-        'Отзыв', Review, on_delete=models.CASCADE, related_name='comments')
-    author = models.IntegerField('Автор', null=True, blank=True)  # временно
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Отзыв'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Автор'
+    )
     text = models.TextField('Текст комментария')
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
