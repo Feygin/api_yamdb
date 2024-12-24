@@ -3,10 +3,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
-User = get_user_model
+User = get_user_model()
 
 
 class Review(models.Model):
+    """Модель для отзывов о произведениях."""
     title = models.CharField('Произведение', max_length=255)  # временно
     author = models.ForeignKey(
         User,
@@ -28,6 +29,7 @@ class Review(models.Model):
     class Meta:
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
+        ordering = ['-pub_date']
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
@@ -36,10 +38,11 @@ class Review(models.Model):
         ]
 
     def __str__(self):
-        return self.text
+        return self.text[:50]
 
 
 class Comment(models.Model):
+    """Модель для комментариев к отзывам."""
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
