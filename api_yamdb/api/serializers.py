@@ -7,7 +7,7 @@ from reviews.models import Review, Comment
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор для модели отзыва (Review)."""
     author = serializers.StringRelatedField(
-        slig_field='username',
+        slug_field='username',
         read_only=True)
 
     class Meta:
@@ -31,7 +31,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для модели комментариев (Comment)."""
     author = serializers.StringRelatedField(
-        slig_field='username',
+        slug_field='username',
         read_only=True)
 
     class Meta:
