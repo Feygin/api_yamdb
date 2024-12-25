@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from .constants import TEXT_MAX_LENGTH
+
 
 User = get_user_model()
 
@@ -38,7 +40,7 @@ class Review(models.Model):
         ]
 
     def __str__(self):
-        return self.text[:50]
+        return self.text[:TEXT_MAX_LENGTH]
 
 
 class Comment(models.Model):
@@ -64,4 +66,4 @@ class Comment(models.Model):
         ordering = ['-pub_date']
 
     def __str__(self):
-        return self.text
+        return self.text[:TEXT_MAX_LENGTH]

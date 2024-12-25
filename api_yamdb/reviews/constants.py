@@ -1,0 +1,1 @@
+TEXT_MAX_LENGTH = 50
