@@ -8,10 +8,11 @@ User = get_user_model()
 
 
 class Genre(models.Model):
+    """Модель для жанров."""
     name = models.CharField(
         max_length=256,
         unique=True,
-        verbose_name="Genre Name"
+        verbose_name="Жанр"
     )
     slug = models.SlugField(
         max_length=50,
@@ -21,18 +22,19 @@ class Genre(models.Model):
     )
 
     class Meta:
-        verbose_name = "Genre"
-        verbose_name_plural = "Genres"
+        verbose_name = "Жанр"
+        verbose_name_plural = "Жанры"
 
     def __str__(self):
         return self.name
 
 
 class Category(models.Model):
+    """Модель для категорий."""
     name = models.CharField(
         max_length=256,
         unique=True,
-        verbose_name="Category Name"
+        verbose_name="Категория"
     )
     slug = models.SlugField(
         max_length=50,
@@ -42,38 +44,39 @@ class Category(models.Model):
     )
 
     class Meta:
-        verbose_name = "Category"
-        verbose_name_plural = "Categories"
+        verbose_name = "Категория"
+        verbose_name_plural = "Категории"
 
     def __str__(self):
         return self.name
 
 
 class Title(models.Model):
+    """Модель для произведений."""
     name = models.CharField(
         max_length=256,
-        verbose_name="Title Name"
+        verbose_name="Наименование произведения"
     )
     year = models.PositiveIntegerField(
         validators=[MaxValueValidator(datetime.now().year)],
-        verbose_name="Year of Release",
+        verbose_name="Год выпуска",
     )
     description = models.TextField(
         null=True,
         blank=True,
-        verbose_name="Description"
+        verbose_name="Описание"
     )
     genre = models.ManyToManyField(
         "Genre",
         related_name="titles",
-        verbose_name="Genres"
+        verbose_name="Жанр"
     )
     category = models.ForeignKey(
         "Category",
         on_delete=models.SET_NULL,
         null=True,
         related_name="titles",
-        verbose_name="Category",
+        verbose_name="Категория",
     )
 
     @property
@@ -84,8 +87,8 @@ class Title(models.Model):
         )
 
     class Meta:
-        verbose_name = "Title"
-        verbose_name_plural = "Titles"
+        verbose_name = "Произведение"
+        verbose_name_plural = "Произведения"
 
     def __str__(self):
         return self.name
