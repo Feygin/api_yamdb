@@ -1,10 +1,18 @@
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 
 User = get_user_model()
+
+slug_validator = RegexValidator(
+    regex=r'^[-a-zA-Z0-9_]+$',
+    message=(
+        'Slug должен соржать только числа, буквы, '
+        'символы подчеркивания и дефис.'
+    )
+)
 
 
 class Genre(models.Model):
@@ -17,7 +25,7 @@ class Genre(models.Model):
     slug = models.SlugField(
         max_length=50,
         unique=True,
-        regex=r"^[-a-zA-Z0-9_]+$",
+        validators=[slug_validator],
         verbose_name="Slug"
     )
 
@@ -39,7 +47,7 @@ class Category(models.Model):
     slug = models.SlugField(
         max_length=50,
         unique=True,
-        regex=r"^[-a-zA-Z0-9_]+$",
+        validators=[slug_validator],
         verbose_name="Slug"
     )
 
