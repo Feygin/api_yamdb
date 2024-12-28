@@ -57,9 +57,14 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
 
     def update(self, request, *args, **kwargs):
+        """Запрещаем PUT-запросы (Method Not Allowed)."""
         if request.method.upper() == 'PUT':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """PATCH-запрос с валидацией данных."""
+        return super().partial_update(request, *args, **kwargs)
 
 
 class MeView(generics.RetrieveUpdateAPIView):
