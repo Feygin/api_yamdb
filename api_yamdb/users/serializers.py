@@ -9,10 +9,7 @@ from .constants import USERNAME_REGEX
 
 
 class SignUpSerializer(serializers.Serializer):
-    """
-    Сериализатор для регистрации нового пользователя.
-    Запрашиваемые поля: email, username.
-    """
+    """Сериализатор для регистрации нового пользователя."""
     email = serializers.EmailField(
         required=True,
         max_length=254,
@@ -34,6 +31,7 @@ class SignUpSerializer(serializers.Serializer):
     )
 
     def validate_username(self, value):
+        """Проверка username на соответствие установленным правилам."""
         if value.lower() == 'me':
             raise ValidationError(
                 {
@@ -45,6 +43,7 @@ class SignUpSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
+        """Создание нового пользователя или обновление существующего."""
         email = validated_data['email']
         username = validated_data['username']
 
@@ -92,10 +91,7 @@ class SignUpSerializer(serializers.Serializer):
 
 
 class TokenSerializer(serializers.Serializer):
-    """
-    Сериализатор для получения JWT-токена.
-    Запрашиваемые поля: username, confirmation_code.
-    """
+    """Сериализатор для получения JWT-токена."""
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
@@ -116,10 +112,7 @@ class TokenSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для просмотра и частичного обновления данных пользователя.
-    Поля role, username для пользователя не редактируемы.
-    """
+    """Сериализатор для отображения и обновления данных пользователя."""
     class Meta:
         model = User
         fields = (
@@ -129,9 +122,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для создания и редактирования пользователей администратором.
-    """
+    """Сериализатор для управления пользователями администраторами."""
     username = serializers.RegexField(
         regex=USERNAME_REGEX,
         max_length=150,
@@ -217,10 +208,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 
 class MeSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для просмотра и обновления данных своей учётной записи.
-    Роль нельзя менять (read-only).
-    """
+    """Сериализатор для управления данными своей учётной записи."""
     username = serializers.RegexField(
         regex=USERNAME_REGEX,
         max_length=150,
@@ -265,9 +253,7 @@ class MeSerializer(serializers.ModelSerializer):
         read_only_fields = ('role',)
 
     def validate(self, data):
-        """
-        Добавляем проверку на конфликт username/email и запрет username='me'.
-        """
+        """Проверка данных учётной записи на допустимость и уникальность."""
         instance = self.instance
         new_username = data.get('username', instance.username)
         new_email = data.get('email', instance.email)
@@ -307,8 +293,5 @@ class MeSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        """
-        Убираем жёсткий запрет на смену username.
-        DRF сам применит validated_data, прошедшие валидацию.
-        """
+        """Обновление данных учётной записи после проверки."""
         return super().update(instance, validated_data)
