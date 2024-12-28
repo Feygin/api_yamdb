@@ -1,3 +1,4 @@
+import re
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import serializers
@@ -5,6 +6,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
+from .constants import USERNAME_REGEX
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -14,8 +16,25 @@ class SignUpSerializer(serializers.Serializer):
     Если пользователь уже существует с указанным username, проверяем email.
     Генерируем код подтверждения и отправляем на почту.
     """
-    email = serializers.EmailField(required=True)
-    username = serializers.CharField(required=True, max_length=150)
+    email = serializers.EmailField(
+        required=True,
+        max_length=254,
+        error_messages={
+            'max_length': 'Длина email не должна превышать 254 символов.'
+        }
+    )
+    username = serializers.RegexField(
+        regex=USERNAME_REGEX,
+        max_length=150,
+        required=True,
+        error_messages={
+            'invalid': (
+                'username содержит недопустимые символы. '
+                'Допустимы только буквы, цифры и символы @.+-_'
+            ),
+            'max_length': 'Длина username не должна превышать 150 символов.'
+        }
+    )
 
     def validate_username(self, value):
         if value.lower() == 'me':
@@ -25,12 +44,23 @@ class SignUpSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
+        email = validated_data['email']
+        username = validated_data['username']
+
+        user_with_same_email = User.objects.filter(email=email).first()
+        if user_with_same_email and user_with_same_email.username != username:
+            raise ValidationError(
+                'Email уже зарегистрирован другим пользователем.'
+            )
+
         user, created = User.objects.get_or_create(
-            username=validated_data['username'],
-            defaults={'email': validated_data['email']}
+            username=username,
+            defaults={'email': email}
         )
-        if not created and user.email != validated_data['email']:
-            raise ValidationError('Username уже существует с другим email.')
+        if not created and user.email != email:
+            raise ValidationError(
+                'Username уже существует с другим email.'
+            )
 
         user.set_new_confirmation_code()
 
@@ -97,9 +127,47 @@ class MeSerializer(serializers.ModelSerializer):
     Сериализатор для просмотра и обновления данных своей учётной записи.
     Роль и username нельзя менять.
     """
+    username = serializers.RegexField(
+        regex=USERNAME_REGEX,
+        max_length=150,
+        required=False,
+        error_messages={
+            'invalid': (
+                'username содержит недопустимые символы. '
+                'Допустимы только буквы, цифры и символы @.+-_'
+            ),
+            'max_length': 'Длина username не должна превышать 150 символов.'
+        }
+    )
+
     class Meta:
         model = User
         fields = (
             'username', 'email', 'role', 'bio', 'first_name', 'last_name'
         )
-        read_only_fields = ('role', 'username')
+        read_only_fields = ('role',)
+
+    def validate_username(self, value):
+        if value.lower() == 'me':
+            raise serializers.ValidationError(
+                'Использование "me" в качестве username запрещено.'
+            )
+        return value
+
+    def update(self, instance, validated_data):
+        """
+        Поле username при PATCH должно валидироваться, но фактически
+        не меняться. Если пользователь передал другой username, либо ругаемся,
+        либо игнорируем.
+        """
+        new_username = validated_data.get('username')
+        current_username = instance.username
+
+        if new_username is not None and new_username != current_username:
+            raise serializers.ValidationError({
+                'username': 'Изменение username не разрешено.'
+            })
+
+        validated_data.pop('username', None)
+
+        return super().update(instance, validated_data)

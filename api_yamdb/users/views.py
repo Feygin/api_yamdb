@@ -1,4 +1,4 @@
-from rest_framework import generics, status, viewsets
+from rest_framework import generics, status, viewsets, filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -52,7 +52,14 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = AdminUserSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ('username',)
     lookup_field = 'username'
+
+    def update(self, request, *args, **kwargs):
+        if request.method.upper() == 'PUT':
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().update(request, *args, **kwargs)
 
 
 class MeView(generics.RetrieveUpdateAPIView):
