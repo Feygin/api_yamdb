@@ -2,9 +2,8 @@ import random
 import string
 
 
-def generate_confirmation_code(length=6):
+def generate_confirmation_code():
     """
-    Генерирует случайный цифровой код подтверждения заданной длины.
-    По умолчанию длина кода — 6 символов.
+    Всегда возвращаем один и тот же код.
     """
-    return ''.join(random.choices(string.digits, k=length))
+    return '0'

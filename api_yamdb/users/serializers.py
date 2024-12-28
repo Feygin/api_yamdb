@@ -47,26 +47,34 @@ class SignUpSerializer(serializers.Serializer):
         username = validated_data['username']
 
         user_with_same_email = User.objects.filter(email=email).first()
+        user_with_same_username = User.objects.filter(username=username).first()
+
+        errors = {}
+
+        if user_with_same_username and user_with_same_username.email != email:
+            errors['username'] = ['Username уже существует с другим email.']
+
         if user_with_same_email and user_with_same_email.username != username:
-            raise ValidationError(
-                'Email уже зарегистрирован другим пользователем.'
-            )
+            errors['email'] = ['Email уже зарегистрирован другим пользователем.']
+
+        if errors:
+            raise ValidationError(errors)
 
         user, created = User.objects.get_or_create(
             username=username,
             defaults={'email': email}
         )
+
         if not created and user.email != email:
-            raise ValidationError(
-                'Username уже существует с другим email.'
-            )
+            errors['username'] = ['Username уже существует с другим email.']
+            raise ValidationError(errors)
 
         user.set_new_confirmation_code()
 
         send_mail(
             subject='Подтверждение почты',
             message=f'Ваш код подтвeрждeния почты: {user.confirmation_code}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email='mail@yamdb.ru',
             recipient_list=[user.email],
         )
         return user
