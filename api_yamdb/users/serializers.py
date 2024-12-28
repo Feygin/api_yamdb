@@ -9,7 +9,12 @@ from .constants import USERNAME_REGEX
 
 
 class SignUpSerializer(serializers.Serializer):
-    """Сериализатор для регистрации нового пользователя."""
+    """
+    Сериализатор для регистрации нового пользователя.
+    Запрашиваемые поля: email, username.
+    Если пользователь уже существует с указанным username, проверяем email.
+    Генерируем код подтверждения и отправляем на почту.
+    """
     email = serializers.EmailField(
         required=True,
         max_length=254,
