@@ -17,5 +17,5 @@ api_v1_router.register(
 )
 
 urlpatterns = [
-    path('api/v1/', include((api_v1_router.urls, 'api_v1'))),
+    path('v1/', include((api_v1_router.urls, 'api_v1'))),
 ]
