@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.generics import get_object_or_404
+from rest_framework.exceptions import MethodNotAllowed
 
 from reviews.models import Review, Title
 from .serializers import ReviewSerializer, CommentSerializer
@@ -25,6 +26,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title = self.get_title()
         serializer.save(author=self.request.user, title=title)
 
+    def update(self, request, *args, **kwargs):
+        """Запрещаем PUT-запросы, но разрешаем PATCH-запросы."""
+        if request.method == 'PUT':
+            raise MethodNotAllowed(
+                "PUT", detail="Метод PUT не разрешен."
+            )
+        return super().update(request, *args, **kwargs)
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет для управления комментариями к отзывам."""
@@ -44,3 +53,11 @@ class CommentViewSet(viewsets.ModelViewSet):
         """Сохраняет новый комментарий с автором и привязывает его к отзыву."""
         review = self.get_review()
         serializer.save(author=self.request.user, review=review)
+
+    def update(self, request, *args, **kwargs):
+        """Запрещаем PUT-запросы, но разрешаем PATCH-запросы."""
+        if request.method == 'PUT':
+            raise MethodNotAllowed(
+                "PUT", detail="Метод PUT не разрешен."
+            )
+        return super().update(request, *args, **kwargs)
