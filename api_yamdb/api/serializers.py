@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Genre, Title, Review, Comment
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -23,16 +23,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
         model = Title
         fields = ["id", "name", "year", "rating",
                   "description", "genre", "category"]
-
-    def to_representation(self, instance):
-        """Модифицируем данные возвращаемые API.
-        Если описание отсутствует, возвращаем пустую строку."""
-        representation = super().to_representation(instance)
-        if not representation.get("description"):
-            representation["description"] = ""
-        return representation
-
-
+        
 class TitleWriteSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         queryset=Genre.objects.all(),
@@ -96,3 +87,45 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели комментариев (Comment)."""
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'text', 'author', 'pub_date')
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели отзыва (Review)."""
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
+    class Meta:
+        model = Review
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
+
+    def validate(self, data):
+        """Проверяет уникальность отзыва от автора для произведения."""
+        request = self.context['request']
+        title_id = self.context['view'].kwargs.get('title_id')
+        author = request.user
+
+        if request.method == 'POST':
+            if Review.objects.filter(title_id=title_id, author=author).exists():
+                raise serializers.ValidationError(
+                    'Вы уже оставляли отзыв на это произведение.'
+                )
+        return data
+
+    def to_representation(self, instance):
+        """Модифицируем данные возвращаемые API.
+        Если описание отсутствует, возвращаем пустую строку."""
+        representation = super().to_representation(instance)
+        if not representation.get("description"):
+            representation["description"] = ""
+        return representation
