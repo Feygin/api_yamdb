@@ -23,6 +23,18 @@ class TitleReadSerializer(serializers.ModelSerializer):
         model = Title
         fields = ["id", "name", "year", "rating",
                   "description", "genre", "category"]
+    
+    def to_representation(self, instance):
+        """Модифицируем данные возвращаемые API.
+        Если описание отсутствует, возвращаем пустую строку.
+        Если категория отсутствует, возвращаем пустой объект
+        категории."""
+        representation = super().to_representation(instance)
+        if not representation.get("description"):
+            representation["description"] = ""
+        if instance.category is None:
+            representation["category"] = CategorySerializer(None).data
+        return representation
         
 class TitleWriteSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
@@ -59,7 +71,10 @@ class TitleWriteSerializer(serializers.ModelSerializer):
             representation["description"] = ""
         representation["genre"] = GenreSerializer(
             instance.genre.all(), many=True).data
-        representation["category"] = CategorySerializer(instance.category).data
+        representation["category"] = (
+            CategorySerializer(instance.category).data
+            if instance.category else CategorySerializer(None).data
+        )
         return representation
 
     def create(self, validated_data):
@@ -88,15 +103,6 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
         return instance
 
-class CommentSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели комментариев (Comment)."""
-    author = serializers.SlugRelatedField(
-        slug_field='username',
-        read_only=True)
-
-    class Meta:
-        model = Comment
-        fields = ('id', 'text', 'author', 'pub_date')
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор для модели отзыва (Review)."""
@@ -122,10 +128,18 @@ class ReviewSerializer(serializers.ModelSerializer):
                 )
         return data
 
-    def to_representation(self, instance):
-        """Модифицируем данные возвращаемые API.
-        Если описание отсутствует, возвращаем пустую строку."""
-        representation = super().to_representation(instance)
-        if not representation.get("description"):
-            representation["description"] = ""
-        return representation
+    def validate_score(self, value):
+        """Проверяет, что оценка находится в пределах от 1 до 10."""
+        if not (1 <= value <= 10):
+            raise serializers.ValidationError('Оценка должна быть от 1 до 10.')
+        return value
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели комментариев (Comment)."""
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'text', 'author', 'pub_date')

@@ -16,7 +16,6 @@ from api.serializers import (CategorySerializer, GenreSerializer,
 class GenreViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
     mixins.DestroyModelMixin,
     GenericViewSet,
 ):
@@ -32,7 +31,6 @@ class GenreViewSet(
 class CategoryViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
     mixins.DestroyModelMixin,
     GenericViewSet,
 ):
