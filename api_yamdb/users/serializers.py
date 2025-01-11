@@ -1,11 +1,11 @@
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User
-from .constants import USERNAME_REGEX
+from users.constants import USERNAME_REGEX
+from users.models import User
 
 
 class SignUpSerializer(serializers.Serializer):

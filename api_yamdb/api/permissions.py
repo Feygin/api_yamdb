@@ -27,7 +27,8 @@ class IsAuthorAdminModerOrReadOnly(permissions.BasePermission):
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     """
-    Allows access only to admins for unsafe methods.
+    Для небозопасных методов доступ предоставляется
+    только админу.
     """
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
