@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .utils import generate_confirmation_code
+from users.utils import generate_confirmation_code
 
 USER = 'user'
 MODERATOR = 'moderator'

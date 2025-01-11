@@ -1,13 +1,12 @@
-from rest_framework import generics, status, viewsets, filters
+from rest_framework import filters, generics, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import User
-from .permissions import IsAdmin
-from .serializers import (
-    SignUpSerializer, TokenSerializer, AdminUserSerializer, MeSerializer
-)
+from users.models import User
+from users.permissions import IsAdmin
+from users.serializers import (AdminUserSerializer, MeSerializer,
+                               SignUpSerializer, TokenSerializer)
 
 
 class SignUpView(generics.CreateAPIView):

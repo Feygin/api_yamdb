@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from reviews.models import Category, Genre, Title, Review, Comment
+
+from reviews.models import Category, Comment, Genre, Review, Title
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -23,7 +24,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
         model = Title
         fields = ["id", "name", "year", "rating",
                   "description", "genre", "category"]
-    
+
     def to_representation(self, instance):
         """Модифицируем данные возвращаемые API.
         Если описание отсутствует, возвращаем пустую строку.
@@ -35,7 +36,8 @@ class TitleReadSerializer(serializers.ModelSerializer):
         if instance.category is None:
             representation["category"] = CategorySerializer(None).data
         return representation
-        
+
+
 class TitleWriteSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         queryset=Genre.objects.all(),
@@ -122,7 +124,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         author = request.user
 
         if request.method == 'POST':
-            if Review.objects.filter(title_id=title_id, author=author).exists():
+            if Review.objects.filter(
+                    title_id=title_id, author=author).exists():
                 raise serializers.ValidationError(
                     'Вы уже оставляли отзыв на это произведение.'
                 )
@@ -133,6 +136,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         if not (1 <= value <= 10):
             raise serializers.ValidationError('Оценка должна быть от 1 до 10.')
         return value
+
 
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для модели комментариев (Comment)."""

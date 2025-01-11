@@ -1,16 +1,16 @@
-from api.filters import TitleFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import GenericViewSet
-from reviews.models import Category, Genre, Title, Review
 
+from api.filters import TitleFilter
 from api.paginations import ReviewPagination
 from api.permissions import IsAdminOrReadOnly, IsAuthorAdminModerOrReadOnly
-from api.serializers import (CategorySerializer, GenreSerializer,
-                             TitleReadSerializer, TitleWriteSerializer,
-                             ReviewSerializer, CommentSerializer)
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, ReviewSerializer,
+                             TitleReadSerializer, TitleWriteSerializer)
+from reviews.models import Category, Genre, Review, Title
 
 
 class GenreViewSet(
@@ -62,6 +62,7 @@ class TitleViewSet(viewsets.ModelViewSet):
                 "PUT", detail="PUT method is not allowed for this endpoint."
             )
         return super().update(request, *args, **kwargs)
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет для управления отзывами."""

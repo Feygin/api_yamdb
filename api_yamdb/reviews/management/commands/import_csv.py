@@ -1,8 +1,10 @@
-import os
 import csv
-from django.core.management.base import BaseCommand, CommandError
+import os
+
 from django.contrib.auth import get_user_model
-from reviews.models import Category, Genre, Title, Review, Comment
+from django.core.management.base import BaseCommand, CommandError
+
+from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
 
@@ -15,6 +17,7 @@ IMPORT_CONFIG = [
     {"file": "review.csv", "model": Review},
     {"file": "comments.csv", "model": Comment},
 ]
+
 
 class Command(BaseCommand):
     help = "Импортирует данные из CSV файлов в БД."
@@ -39,14 +42,22 @@ class Command(BaseCommand):
             file_path = os.path.join(path, filename)
 
             if not os.path.exists(file_path):
-                self.stdout.write(self.style.WARNING(f"File {filename} not found. Skipping..."))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"File {filename} not found. Skipping..."
+                    )
+                )
                 continue
 
             if filename == "genre_title.csv":
-                self.stdout.write(self.style.SUCCESS(f"Importing data from {filename}..."))
+                self.stdout.write(
+                    self.style.SUCCESS(f"Importing data from {filename}...")
+                )
                 self.import_genre_title(file_path)
             else:
-                self.stdout.write(self.style.SUCCESS(f"Importing data from {filename}..."))
+                self.stdout.write(
+                    self.style.SUCCESS(f"Importing data from {filename}...")
+                )
                 self.import_csv(file_path, model)
 
     def import_csv(self, file_path, model):
@@ -79,9 +90,16 @@ class Command(BaseCommand):
                     model.objects.update_or_create(**row)
                     count += 1
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f"Error importing row {row}: {e}"))
+                    self.stdout.write(
+                        self.style.ERROR(f"Error importing row {row}: {e}")
+                    )
 
-            self.stdout.write(self.style.SUCCESS(f"Successfully imported {count} rows into {model.__name__}."))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Successfully imported {count} rows "
+                    f"into {model.__name__}."
+                )
+            )
 
     def import_genre_title(self, file_path):
         """Специальный обработчик genre_title.csv. Работает с М2М связью."""
@@ -96,4 +114,6 @@ class Command(BaseCommand):
                     title.genre.add(genre)
                     count += 1
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f"Error importing row {row}: {e}"))
+                    self.stdout.write(
+                        self.style.ERROR(f"Error importing row {row}: {e}")
+                    )
