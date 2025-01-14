@@ -3,10 +3,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.permissions import IsAdmin
+from api.serializers import (AdminUserSerializer, MeSerializer,
+                             SignUpSerializer, TokenSerializer)
 from users.models import User
-from users.permissions import IsAdmin
-from users.serializers import (AdminUserSerializer, MeSerializer,
-                               SignUpSerializer, TokenSerializer)
 
 
 class SignUpView(generics.CreateAPIView):
