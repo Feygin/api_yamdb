@@ -129,6 +129,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             )
         return super().update(request, *args, **kwargs)
 
+
 class SignUpView(generics.CreateAPIView):
     """
     Представление для регистрации пользователя.
