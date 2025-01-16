@@ -8,6 +8,7 @@ from reviews.models import Category, Comment, Genre, Review, Title
 from api.constants import (USERNAME_REGEX, MAX_LENGTH_USERNAME,
                            MAX_LENGTH_FIRST_NAME, MAX_LENGTH_LAST_NAME,
                            MAX_LENGTH_EMAIL)
+from reviews.constants import MIN_SCORE, MAX_SCORE
 from users.models import User
 
 
@@ -124,6 +125,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
+    score = serializers.IntegerField(
+        max_value=MAX_SCORE,
+        min_value=MIN_SCORE,
+        error_messages={
+            'max_value': 'Оценка не может быть больше 10.',
+            'min_value': 'Оценка не может быть меньше 1.'
+        }
+    )
 
     class Meta:
         model = Review
@@ -132,22 +141,15 @@ class ReviewSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """Проверяет уникальность отзыва от автора для произведения."""
         request = self.context['request']
-        title_id = self.context['view'].kwargs.get('title_id')
+        title = self.context['view'].get_title()
         author = request.user
 
         if request.method == 'POST':
-            if Review.objects.filter(
-                    title_id=title_id, author=author).exists():
+            if title.reviews.filter(author=author).exists():
                 raise serializers.ValidationError(
                     'Вы уже оставляли отзыв на это произведение.'
                 )
         return data
-
-    def validate_score(self, value):
-        """Проверяет, что оценка находится в пределах от 1 до 10."""
-        if not (1 <= value <= 10):
-            raise serializers.ValidationError('Оценка должна быть от 1 до 10.')
-        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
