@@ -5,7 +5,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg
 
-from reviews.constants import TEXT_MAX_LENGTH
+from reviews.constants import (TEXT_MAX_LENGTH, SLUG_MAX_LENGTH,
+                               MIN_SCORE, MAX_SCORE)
 
 User = get_user_model()
 
@@ -13,12 +14,12 @@ User = get_user_model()
 class Genre(models.Model):
     """Модель для жанров."""
     name = models.CharField(
-        max_length=256,
+        max_length=TEXT_MAX_LENGTH,
         unique=True,
         verbose_name="Жанр"
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=SLUG_MAX_LENGTH,
         unique=True,
         verbose_name="Slug"
     )
@@ -26,6 +27,7 @@ class Genre(models.Model):
     class Meta:
         verbose_name = "Жанр"
         verbose_name_plural = "Жанры"
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -34,12 +36,12 @@ class Genre(models.Model):
 class Category(models.Model):
     """Модель для категорий."""
     name = models.CharField(
-        max_length=256,
+        max_length=TEXT_MAX_LENGTH,
         unique=True,
         verbose_name="Категория"
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=SLUG_MAX_LENGTH,
         unique=True,
         verbose_name="Slug"
     )
@@ -47,6 +49,7 @@ class Category(models.Model):
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -55,7 +58,7 @@ class Category(models.Model):
 class Title(models.Model):
     """Модель для произведений."""
     name = models.CharField(
-        max_length=256,
+        max_length=TEXT_MAX_LENGTH,
         verbose_name="Наименование произведения"
     )
     year = models.PositiveIntegerField(
@@ -80,16 +83,10 @@ class Title(models.Model):
         verbose_name="Категория",
     )
 
-    @property
-    def rating(self):
-        """ Cчитает средний рэйтинг произведения. """
-        result = self.reviews.aggregate(average=Avg('score'))
-        average_score = result['average']
-        return int(round(average_score)) if average_score is not None else None
-
     class Meta:
         verbose_name = "Произведение"
         verbose_name_plural = "Произведения"
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -114,8 +111,8 @@ class Review(models.Model):
     score = models.PositiveSmallIntegerField(
         'Оценка',
         validators=[
-            MinValueValidator(1, 'Оценка должна быть не меньше 1'),
-            MaxValueValidator(10, 'Оценка должна быть не больше 10')
+            MinValueValidator(MIN_SCORE, 'Оценка должна быть не меньше 1'),
+            MaxValueValidator(MAX_SCORE, 'Оценка должна быть не больше 10')
         ]
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
