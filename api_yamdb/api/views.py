@@ -1,7 +1,6 @@
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, mixins, status, viewsets
-from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -71,6 +70,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет для управления отзывами."""
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorAdminModerOrReadOnly]
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_title(self):
         """Получает объект произведения."""
@@ -86,19 +86,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title = self.get_title()
         serializer.save(author=self.request.user, title=title)
 
-    def update(self, request, *args, **kwargs):
-        """Запрещаем PUT-запросы, но разрешаем PATCH-запросы."""
-        if request.method == 'PUT':
-            raise MethodNotAllowed(
-                "PUT", detail="Метод PUT не разрешен."
-            )
-        return super().update(request, *args, **kwargs)
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет для управления комментариями к отзывам."""
     serializer_class = CommentSerializer
     permission_classes = [IsAuthorAdminModerOrReadOnly]
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_review(self):
         """Получает объект отзыва."""
@@ -116,14 +109,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         """Сохраняет новый комментарий с автором и привязывает его к отзыву."""
         review = self.get_review()
         serializer.save(author=self.request.user, review=review)
-
-    def update(self, request, *args, **kwargs):
-        """Запрещаем PUT-запросы, но разрешаем PATCH-запросы."""
-        if request.method == 'PUT':
-            raise MethodNotAllowed(
-                "PUT", detail="Метод PUT не разрешен."
-            )
-        return super().update(request, *args, **kwargs)
 
 
 class SignUpView(generics.CreateAPIView):
