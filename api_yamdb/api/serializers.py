@@ -26,7 +26,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class TitleReadSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.IntegerField(read_only=True)
+    rating = serializers.IntegerField(read_only=True, default=None)
 
     class Meta:
         model = Title
@@ -41,6 +41,8 @@ class TitleReadSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         if not representation.get("description"):
             representation["description"] = ""
+        if not representation.get("rating"):
+            representation["rating"] = None
         if instance.category is None:
             representation["category"] = CategorySerializer(None).data
         return representation
@@ -58,7 +60,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         slug_field="slug",
         help_text="Категория отсутствует в БД.",
     )
-    rating = serializers.IntegerField(read_only=True)
+    rating = serializers.IntegerField(read_only=True, default=None)
 
     class Meta:
         model = Title
@@ -79,6 +81,8 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         if not representation.get("description"):
             representation["description"] = ""
+        if not representation.get("rating"):
+            representation["rating"] = None
         representation["genre"] = GenreSerializer(
             instance.genre.all(), many=True).data
         representation["category"] = (

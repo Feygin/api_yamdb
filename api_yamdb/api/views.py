@@ -1,21 +1,22 @@
+from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, generics, status, viewsets, mixins
+from rest_framework import filters, generics, mixins, status, viewsets
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.generics import get_object_or_404
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet
 
 from api.filters import TitleFilter
 from api.paginations import ReviewPagination
-from api.permissions import (IsAdminOrReadOnly, IsAuthorAdminModerOrReadOnly,
-                             IsAdmin)
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
+from api.permissions import (IsAdmin, IsAdminOrReadOnly,
+                             IsAuthorAdminModerOrReadOnly)
+from api.serializers import (AdminUserSerializer, CategorySerializer,
+                             CommentSerializer, GenreSerializer, MeSerializer,
+                             ReviewSerializer, SignUpSerializer,
                              TitleReadSerializer, TitleWriteSerializer,
-                             AdminUserSerializer, MeSerializer,
-                             SignUpSerializer, TokenSerializer)
+                             TokenSerializer)
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
@@ -51,24 +52,19 @@ class CategoryViewSet(
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.prefetch_related("genre", "category").all()
+    queryset = Title.objects.prefetch_related("genre", "category").annotate(
+        rating=Avg("reviews__score")
+    )
     filter_backends = [DjangoFilterBackend]
-    filterset_class = TitleFilter  # Correctly assign the filter set
+    filterset_class = TitleFilter
     permission_classes = [IsAdminOrReadOnly]
     pagination_class = ReviewPagination
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
             return TitleReadSerializer
         return TitleWriteSerializer
-
-    def update(self, request, *args, **kwargs):
-        """Запрещаем PUT."""
-        if request.method == "PUT":
-            raise MethodNotAllowed(
-                "PUT", detail="PUT method is not allowed for this endpoint."
-            )
-        return super().update(request, *args, **kwargs)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
